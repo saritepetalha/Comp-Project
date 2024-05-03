@@ -1,0 +1,15 @@
+user1,password1!,4,2,2,15
+user2,password1!,5,3,2,20
+user3,password1!,3,1,2,10
+user4,password1!,3,1,2,10
+user5,password1!,3,1,2,10
+user6,password1!,3,1,2,10
+user7,password1!,3,1,2,10
+user8,password1!,3,1,2,10
+user9,password1!,3,1,2,10
+user10,password1!,3,1,2,10
+user11,password1!,3,1,2,10
+user12,password1!,3,1,2,10
+user13,password1!,3,1,2,10
+user14,password1!,3,1,2,10
+tahaekim61,A@a210620,0,0,0,0
