@@ -6,6 +6,7 @@ import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -20,6 +21,8 @@ import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 import card.*;
 import game.Player;
+import javax.swing.JSplitPane;
+import javax.swing.JLayeredPane;
 
 public class GameSession_page extends JFrame implements MouseListener {
 
@@ -55,7 +58,6 @@ public class GameSession_page extends JFrame implements MouseListener {
             Players.add(new Player(name, playerCards));
         }
 		userCards = dealCards(7);
-		displayPlayerCards(userCards);
 		discardCards = new ArrayList<>();
 		discardCards.add(drawCards.remove(0));
 		
@@ -81,8 +83,13 @@ public class GameSession_page extends JFrame implements MouseListener {
         getContentPane().add(scrollPane_1, BorderLayout.CENTER);
         
         JPanel panel_1 = panelMaker(discardCards.get(discardCards.size() - 1));
+
         scrollPane_1.setViewportView(panel_1);
         
+        JScrollPane scrollPane_2 = new JScrollPane();
+        scrollPane_2.setBounds(170, 699, 1134, 181);
+        contentPane.add(scrollPane_2);
+        displayPlayerCards(userCards, scrollPane_2);
 		
 		
 	}
@@ -101,7 +108,7 @@ public class GameSession_page extends JFrame implements MouseListener {
 		        cards.add(card);
 			}
 			for (int i = 0; i < 3; i++) {
-				String actionType = card.ActionCard.colors[i];
+				String actionType = card.ActionCard.actionTypes[i];
 				Card card = new ActionCard(color, actionType);
 				cards.add(card);
 		        cards.add(card);
@@ -129,14 +136,19 @@ public class GameSession_page extends JFrame implements MouseListener {
         return playerCards;
     }
 	
-	private void displayPlayerCards(ArrayList<Card> playerCards) {
-        JPanel playerPanel = new JPanel();
-        for (Card card : playerCards) {
-            JLabel cardLabel = new JLabel(card.toString());
-            playerPanel.add(cardLabel);
-        }
-        getContentPane().add(playerPanel);
-    }
+	private void displayPlayerCards(ArrayList<Card> playerCards, JScrollPane scrollPane) {
+		GridLayout gridLayout = new GridLayout(1, 3, 10, 10);
+		JPanel playerPanel = new JPanel();
+		playerPanel.setLayout(new FlowLayout());
+	    for (Card card : playerCards) {
+	        JPanel cardPanel = panelMaker(card);
+	        cardPanel.setLayout(gridLayout);
+	        cardPanel.setBounds(EXIT_ON_CLOSE, ABORT, 175, 120);
+	        playerPanel.add(cardPanel);
+	    }
+	    scrollPane.setViewportView(playerPanel);
+
+	}
 	private JPanel panelMaker(Card card) {
 		
 		ImageIcon image = card.getImage();
@@ -159,19 +171,17 @@ public class GameSession_page extends JFrame implements MouseListener {
 			largePanel.add(label, BorderLayout.CENTER);
 		}
 		else if(card instanceof ActionCard) {
-			ImageIcon actionImage = ((ActionCard)card).getActionImage();
-			JPanel smallPanel = new JPanel() {
-	            @Override
-	            protected void paintComponent(Graphics g) {
-	                super.paintComponent(g);
-	                g.drawImage(actionImage.getImage(), 0, 0, getWidth(), getHeight(), this);
-	            }
-	        };
-	        largePanel.add(smallPanel, BorderLayout.CENTER);
+			ImageIcon actionImage = new ImageIcon(ImageResizer.resizeImage(((ActionCard)card).getImagePath(), 30 ,30));
+			JLabel label = new JLabel(actionImage);
+	        label.setBounds(0,0,30,30);
+			label.setHorizontalAlignment(JLabel.CENTER); 
+	        label.setVerticalAlignment(JLabel.CENTER);
+	        largePanel.add(label, BorderLayout.CENTER);
 		}
         
         return largePanel;
 	}
+	
 	
 	
 
