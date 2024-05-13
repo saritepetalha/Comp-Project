@@ -9,4 +9,7 @@ public abstract class Card {
     public ImageIcon getImage() {
         return image;
     }
+
+	public abstract String getColor();
+	public abstract String getSign();
 }

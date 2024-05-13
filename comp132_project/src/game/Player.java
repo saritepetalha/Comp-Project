@@ -4,10 +4,10 @@ import java.util.ArrayList;
 
 import card.Card;
 
-public class Player {
+public class Player{
 	
-	private ArrayList<Card> playerCards;
-	private String name;
+	protected ArrayList<Card> playerCards;
+	protected String name;
 	
 	public Player(String name, ArrayList<Card> cards) {
 		this.name = name;
@@ -29,6 +29,7 @@ public class Player {
 	public void setName(String name) {
 		this.name = name;
 	}
+
 	
 
 }

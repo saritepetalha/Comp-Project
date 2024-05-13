@@ -26,5 +26,13 @@ public class WildCard extends Card{
 	public void setType(String type) {
 		this.type = type;
 	}
-	
+
+	@Override
+	public String getColor() {
+		return null;
+	}
+	@Override
+	public String getSign() {
+		return null;
+	}
 }

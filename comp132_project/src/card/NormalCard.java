@@ -33,4 +33,9 @@ public class NormalCard extends Card{
 		this.color = color;
 	}
 
+	@Override
+	public String getSign() {
+		return null;
+	}
+
 }

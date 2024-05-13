@@ -2,12 +2,15 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.EventQueue;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
@@ -20,18 +23,29 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 import card.*;
+import game.AIPlayer;
+import game.Game;
 import game.Player;
 import javax.swing.JSplitPane;
 import javax.swing.JLayeredPane;
+import javax.swing.JOptionPane;
 
-public class GameSession_page extends JFrame implements MouseListener {
+public class GameSession_page extends JFrame{
 
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private ArrayList<Card> drawCards;
 	private ArrayList<Card> discardCards;
-	private ArrayList<Player> Players;
-	private ArrayList<Card> userCards;
+	private ArrayList<AIPlayer> players;
+	private Player user;
+	private String currentColor;
+	private String currentSign;
+	private JScrollPane scrollPane_1;
+	private JPanel panel_1;
+	private JScrollPane scrollPane_2;
+	private boolean isUserTurn = true;
+	private boolean direction = false;
+	private Game game;
 
 	/**
 	 * Create the frame.
@@ -47,17 +61,18 @@ public class GameSession_page extends JFrame implements MouseListener {
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
-		drawCards = generateCards();
-		shuffleCards(drawCards);
+		game = new Game();
+		drawCards = game.generateCards();
+		game.shuffleCards(drawCards);
 		
-		Players = new ArrayList<>();
+		players = new ArrayList<>();
 		
 		for (int i = 0; i < numPlayer - 1; i++) {
-            ArrayList<Card> playerCards = dealCards(7);
+            ArrayList<Card> playerCards = game.dealCards(7, drawCards);
             String name = "Player " + String.valueOf(i + 1);
-            Players.add(new Player(name, playerCards));
+            players.add(new AIPlayer(name, playerCards));
         }
-		userCards = dealCards(7);
+		user = new Player("You", game.dealCards(7, drawCards));
 		discardCards = new ArrayList<>();
 		discardCards.add(drawCards.remove(0));
 		
@@ -76,65 +91,35 @@ public class GameSession_page extends JFrame implements MouseListener {
             }
         };
         scrollPane.setViewportView(panel);
+        panel.addMouseListener(new MouseAdapter() {
+        	@Override
+        	public void mouseClicked(MouseEvent e) {
+        		if(isUserTurn) {
+        			Game.drawCard(user, drawCards, discardCards);
+        			displayPlayerCards(user.getPlayerCards(), scrollPane_2);
+        		}
+        	}
+        });
 
         
-        JScrollPane scrollPane_1 = new JScrollPane();
+        scrollPane_1 = new JScrollPane();
         scrollPane_1.setBounds(752, 309, 123, 181);
         getContentPane().add(scrollPane_1, BorderLayout.CENTER);
         
-        JPanel panel_1 = panelMaker(discardCards.get(discardCards.size() - 1));
+        panel_1 = panelMaker(discardCards.get(discardCards.size() - 1));
+        currentColor = discardCards.get(discardCards.size() - 1).getColor();
+        currentSign = discardCards.get(discardCards.size() - 1).getSign();
 
         scrollPane_1.setViewportView(panel_1);
         
-        JScrollPane scrollPane_2 = new JScrollPane();
-        scrollPane_2.setBounds(170, 699, 1134, 181);
+        scrollPane_2 = new JScrollPane();
+        scrollPane_2.setBounds(170, 689, 1134, 191);
         contentPane.add(scrollPane_2);
-        displayPlayerCards(userCards, scrollPane_2);
-		
-		
-	}
-	
-	public ArrayList<Card> generateCards() {
-	
-		ArrayList<Card> cards = new ArrayList<>();
-		
-		
-		for (int j = 0; j < 4; j++) {
-			String color = card.NormalCard.colors[j];
-			cards.add(new NumberCard(color, 0));
-			for (int i = 1; i < 10; i++) {
-		        Card card = new NumberCard(color, i);
-		        cards.add(card);
-		        cards.add(card);
-			}
-			for (int i = 0; i < 3; i++) {
-				String actionType = card.ActionCard.actionTypes[i];
-				Card card = new ActionCard(color, actionType);
-				cards.add(card);
-		        cards.add(card);
-			}
-		}
-		for(int i = 0; i < 4; i++) {
-			cards.add(new WildCard("Normal"));
-			cards.add(new WildCard("Draw"));
-		}
-		return cards;
+        displayPlayerCards(user.getPlayerCards(), scrollPane_2);
+		addPlayers(players);
 		
 	}
-	public void shuffleCards(ArrayList<Card> cards){
-		Collections.shuffle(cards);
-	}
-	
-	private ArrayList<Card> dealCards(int numCards) {
-        ArrayList<Card> playerCards = new ArrayList<>();
-        for (int j = 0; j < numCards; j++) {
-            if (!drawCards.isEmpty()) {
-                Card card = drawCards.remove(0);
-                playerCards.add(card);
-            }
-        }
-        return playerCards;
-    }
+
 	
 	private void displayPlayerCards(ArrayList<Card> playerCards, JScrollPane scrollPane) {
 		GridLayout gridLayout = new GridLayout(1, 3, 10, 10);
@@ -143,77 +128,256 @@ public class GameSession_page extends JFrame implements MouseListener {
 	    for (Card card : playerCards) {
 	        JPanel cardPanel = panelMaker(card);
 	        cardPanel.setLayout(gridLayout);
-	        cardPanel.setBounds(EXIT_ON_CLOSE, ABORT, 175, 120);
+	        cardPanel.setPreferredSize(new Dimension(120, 175));
+	        cardPanel.setBounds(EXIT_ON_CLOSE, ABORT, 120, 175);
+	        cardPanel.addMouseListener(new MouseAdapter() {
+	        	@Override
+	        	public void mouseClicked(MouseEvent e) {
+	        		Component clickedComponent = e.getComponent();
+	        		if (clickedComponent instanceof CardPanel && isUserTurn) {
+	        			CardPanel clickedPanel = (CardPanel) clickedComponent;
+	        			Card clickedCard = clickedPanel.getCard();
+	        			if (clickedCard != null && Game.isValidMove(clickedCard, currentSign, currentColor)) {
+	        				currentSign = clickedCard.getSign();
+	        			    currentColor = clickedCard.getColor();
+	        			    panel_1.removeAll();
+	        			    panel_1 = panelMaker(clickedCard);
+	        			    scrollPane_1.revalidate();
+	        			    scrollPane_1.repaint();
+	        			    scrollPane_1.setViewportView(panel_1);
+	        		        user.getPlayerCards().remove(clickedCard);
+	        		        discardCards.add(clickedCard);
+	        		        isUserTurn = false;
+	        		        if(clickedCard instanceof WildCard) {
+	        		        	String[] options = {"Red", "Yellow", "Blue", "Green"};
+	        			        int choice = JOptionPane.showOptionDialog(e.getComponent(), "Choose a color", "Colors",
+	        			                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+	        			        if (choice != JOptionPane.CLOSED_OPTION) {
+	        			        	currentColor = options[choice];
+	        			        }
+	        		        }
+	        		        
+	        		        displayPlayerCards(user.getPlayerCards(), scrollPane_2);
+	        		        if (currentSign == ActionCard.actionTypes[2]) {
+	        		        	startTour(true);
+	        		        }
+	        		        else {
+	        		        	startTour(false);
+	        		        }
+	        			}
+	        		}  
+	            }
+	        });
 	        playerPanel.add(cardPanel);
 	    }
 	    scrollPane.setViewportView(playerPanel);
 
 	}
 	private JPanel panelMaker(Card card) {
-		
-		ImageIcon image = card.getImage();
-		JPanel largePanel = new JPanel() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                super.paintComponent(g);
-                g.drawImage(image.getImage(), 0, 0, getWidth(), getHeight(), this);
-            }
-        };
-        largePanel.setLayout(new BorderLayout());
-		
-		if(card instanceof NumberCard) {
-			int number = ((NumberCard)card).getNumber();
-			JLabel label = new JLabel(String.valueOf(number));
-			label.setBounds(0,0,30,30);
-			label.setHorizontalAlignment(JLabel.CENTER); 
+	    
+	    ImageIcon image = card.getImage();
+	    CardPanel cardPanel = new CardPanel(card) {
+	        @Override
+	        protected void paintComponent(Graphics g) {
+	            super.paintComponent(g);
+	            g.drawImage(image.getImage(), 0, 0, getWidth(), getHeight(), this);
+	        }
+	    };
+	    cardPanel.setLayout(new BorderLayout());
+	    
+	    if(card instanceof NumberCard) {
+	        int number = ((NumberCard)card).getNumber();
+	        JLabel label = new JLabel(String.valueOf(number));
+	        label.setBounds(0,0,30,30);
+	        label.setHorizontalAlignment(JLabel.CENTER); 
 	        label.setVerticalAlignment(JLabel.CENTER);
 	        label.setFont(new Font("Tahoma", Font.BOLD, 50));
-			largePanel.add(label, BorderLayout.CENTER);
-		}
-		else if(card instanceof ActionCard) {
-			ImageIcon actionImage = new ImageIcon(ImageResizer.resizeImage(((ActionCard)card).getImagePath(), 30 ,30));
-			JLabel label = new JLabel(actionImage);
+	        cardPanel.add(label, BorderLayout.CENTER);
+	    }
+	    else if(card instanceof ActionCard) {
+	        ImageIcon actionImage = ((ActionCard)card).getActionImage();
+	        JLabel label = new JLabel(actionImage);
 	        label.setBounds(0,0,30,30);
-			label.setHorizontalAlignment(JLabel.CENTER); 
+	        label.setHorizontalAlignment(JLabel.CENTER); 
 	        label.setVerticalAlignment(JLabel.CENTER);
-	        largePanel.add(label, BorderLayout.CENTER);
+	        cardPanel.add(label, BorderLayout.CENTER);
+	    }
+
+	    return cardPanel;
+	}
+	private void startTour(boolean skip) {
+		if (!direction && !skip) {
+			startTourHelper(0);
 		}
-        
-        return largePanel;
+		else if(direction && !skip){
+			startTourHelper(players.size() - 1);
+		}
+		else if(!direction && skip) {
+			startTourHelper(1);
+		}
+		else {
+			startTourHelper(players.size() - 2);
+		}
+		isUserTurn = true;
 	}
-	
-	
-	
-
-	@Override
-	public void mouseClicked(MouseEvent e) {
+	private void startTourHelper(int current) {
+		int version = 0;
+		int last = 0;
+		if (!direction) {
+			for(int i = current; i < players.size(); i++) {
+				
+				Card choosenCard = players.get(i).choosedCard(currentSign, currentColor, drawCards, discardCards);
+				currentColor = choosenCard.getColor();
+				currentSign = choosenCard.getSign();
+				panel_1.removeAll();
+				panel_1 = panelMaker(choosenCard);
+				scrollPane_1.revalidate();
+				scrollPane_1.repaint();
+			    scrollPane_1.setViewportView(panel_1);
+				discardCards.add(choosenCard);
+				try {
+				    players.get(i).getPlayerCards().remove(choosenCard);
+				} catch (Exception e) {
+				    System.err.println("Kart kaldırılırken bir hata oluştu: " + e.getMessage());
+				    e.printStackTrace();
+				}
+				addPlayers(players);
+				if(choosenCard instanceof ActionCard) {
+					if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[1]) {
+						direction = true;
+						last = i - 1;
+						version = 1;
+						break;
+					}
+					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[2]) {
+						if(i == players.size() - 1) {
+							last = 0;
+							version = 1;
+							break;
+						}
+						last = i + 2;
+						version = 1;
+						break;
+					}
+					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[0]) {
+						if(i == players.size() - 1) {
+							
+							Game.drawCard(user, drawCards, discardCards);
+							Game.drawCard(user, drawCards, discardCards);
+							displayPlayerCards(user.getPlayerCards(), scrollPane_2);
+							break;
+						}
+						Game.drawCard(players.get(i + 1), drawCards, discardCards);
+						Game.drawCard(players.get(i + 1), drawCards, discardCards);
+					}
+				}
+				else if(choosenCard instanceof WildCard) {
+					currentColor = players.get(i).makeChoose();
+					JOptionPane.showMessageDialog(this, currentColor + " is new color", "Warning", JOptionPane.WARNING_MESSAGE);
+					if(((WildCard) choosenCard).getType() == WildCard.types[1]) {
+						if(i == players.size() - 1) {
+							Game.drawCard(user, drawCards, discardCards);
+							Game.drawCard(user, drawCards, discardCards);
+							Game.drawCard(user, drawCards, discardCards);
+							Game.drawCard(user, drawCards, discardCards);
+							displayPlayerCards(user.getPlayerCards(), scrollPane_2);
+							break;
+						}
+						Game.drawCard(players.get(i + 1), drawCards, discardCards);
+						Game.drawCard(players.get(i + 1), drawCards, discardCards);
+						Game.drawCard(players.get(i + 1), drawCards, discardCards);
+						Game.drawCard(players.get(i + 1), drawCards, discardCards);
+					}
+				}
+			}
+		}
+		else {
+			for(int i = current; i >=0; i--) {
+				
+				Card choosenCard = players.get(i).choosedCard(currentSign, currentColor, drawCards, discardCards);
+				currentColor = choosenCard.getColor();
+				currentSign = choosenCard.getSign();
+				panel_1.removeAll();
+				panel_1 = panelMaker(choosenCard);
+				scrollPane_1.revalidate();
+				scrollPane_1.repaint();
+			    scrollPane_1.setViewportView(panel_1);
+				discardCards.add(choosenCard);
+				try {
+				    players.get(i).getPlayerCards().remove(choosenCard);
+				} catch (Exception e) {
+				    System.err.println("Kart kaldırılırken bir hata oluştu: " + e.getMessage());
+				    e.printStackTrace();
+				}
+				addPlayers(players);
+				if(choosenCard instanceof ActionCard) {
+					if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[1]) {
+						direction = false;
+						last = i + 1;
+						version = 1;
+						break;
+					}
+					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[2]) {
+						if(i == 0) {
+							last = players.size() - 1;
+							version = 1;
+							break;
+						}
+						version = 1;
+						last = i - 2;
+					}
+					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[0]) {
+						if(i == 0) {
+							Game.drawCard(user, drawCards, discardCards);
+							Game.drawCard(user, drawCards, discardCards);
+							break;
+						}
+						Game.drawCard(players.get(i - 1), drawCards, discardCards);
+						Game.drawCard(players.get(i - 1), drawCards, discardCards);
+					}
+				}
+				else if(choosenCard instanceof WildCard) {
+					currentColor = players.get(i).makeChoose();
+					if(((WildCard) choosenCard).getType() == WildCard.types[1]) {
+						if(i == players.size() - 1) {
+							Game.drawCard(user, drawCards, discardCards);
+							Game.drawCard(user, drawCards, discardCards);
+							Game.drawCard(user, drawCards, discardCards);
+							Game.drawCard(user, drawCards, discardCards);
+							break;
+						}
+						Game.drawCard(players.get(i - 1), drawCards, discardCards);
+						Game.drawCard(players.get(i - 1), drawCards, discardCards);
+						Game.drawCard(players.get(i - 1), drawCards, discardCards);
+						Game.drawCard(players.get(i - 1), drawCards, discardCards);
+					}
+					currentColor = players.get(i).makeChoose();
+					currentSign = null;
+				}
+			}
+		}
+		if(version == 1) {
+			startTourHelper(last);
+		}
 		
-        		
 	}
+	private void addPlayers(ArrayList<AIPlayer> players) {
+	    JPanel playerPanel = new JPanel(new GridLayout(3, 3)); 
 
-	@Override
-	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	    for (int i = 1; i <= players.size(); i++) {
+	        ImageIcon playerPhoto = new ImageIcon("img/UNO-Cards-Back.jpg"); 
+	        JLabel playerLabel = new JLabel(playerPhoto); 
+	        playerPanel.add(playerLabel); 
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	        JLabel cardCountLabel = new JLabel("Number of Cards: " + players.get(i-1).getPlayerCards().size()); 
+	        playerPanel.add(cardCountLabel);
+	    }
 
-	@Override
-	public void mouseEntered(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
+	    
+	    playerPanel.setBounds(400, 200, 600, 300);
+	    contentPane.add(playerPanel); 
 	}
-
-	@Override
-	public void mouseExited(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	 
 }
-	
+
 	

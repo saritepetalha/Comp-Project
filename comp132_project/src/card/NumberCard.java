@@ -19,5 +19,8 @@ public class NumberCard extends NormalCard{
 	public void setNumber(int number) {
 		this.number = number;
 	}
-	
+	@Override
+	public String getSign() {
+		return String.valueOf(number);
+	}
 }

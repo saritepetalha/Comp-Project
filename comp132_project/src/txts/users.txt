@@ -13,3 +13,6 @@ user12,password1!,3,1,2,10
 user13,password1!,3,1,2,10
 user14,password1!,3,1,2,10
 tahaekim61,A@a210620,0,0,0,0
+ekin77,ekin123!,0,0,0,0
+fahreddin25,Aslandovusuyor25:,0,0,0,0
+kerem01,kayacı01.,0,0,0,0

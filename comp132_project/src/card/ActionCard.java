@@ -2,6 +2,8 @@ package card;
 
 import javax.swing.ImageIcon;
 
+import gui.ImageResizer;
+
 public class ActionCard extends NormalCard{
 	
 	protected String action;
@@ -13,15 +15,15 @@ public class ActionCard extends NormalCard{
 		super(color);
 		this.action = action;
 		if(action == "Draw") {
-			actionImage =new ImageIcon("img/draw.png");
+			actionImage =new ImageIcon(ImageResizer.resizeImage("img/draw.png", 30, 30));
 			imagePath = "img/draw.png";
 		}
 		else if(action == "Reverse") {
-			actionImage =new ImageIcon("img/reverse.png");
-			imagePath = "img/reverse.png";
+			actionImage =new ImageIcon(ImageResizer.resizeImage("img/reverse.jpg", 30, 30));
+			imagePath = "img/reverse.jpg";
 		}
 		else if(action == "Skip") {
-			actionImage =new ImageIcon("img/skip.png");
+			actionImage =new ImageIcon(ImageResizer.resizeImage("img/skip.png", 30, 30));
 			imagePath = "img/skip.png";
 		}
 	}
@@ -57,5 +59,8 @@ public class ActionCard extends NormalCard{
 	public void setImagePath(String imagePath) {
 		this.imagePath = imagePath;
 	}
-	
+	@Override
+	public String getSign() {
+		return action;
+	}
 }

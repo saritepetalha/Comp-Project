@@ -131,7 +131,7 @@ public class Register_page extends JFrame {
                 	
                 	try {
                 		BufferedWriter writer = new BufferedWriter(new FileWriter("/Users/muham/git/Comp-Project/comp132_project/src/txts/users.txt", true));
-                		writer.write(username + "," + password + "," + "0"+ "," + "0"+ "," + "0"+ "," + "0" + "\n");
+                		writer.write("\n" + username + "," + password + "," + "0"+ "," + "0"+ "," + "0"+ "," + "0" );
 						writer.close();
 						JOptionPane.showMessageDialog(Register_page.this, "Registration successful! User added.");
                 	}
