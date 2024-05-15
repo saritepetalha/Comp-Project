@@ -104,8 +104,5 @@ public class UserInfo_page extends JFrame {
 		btnNewButton.setBounds(294, 457, 135, 21);
 		contentPane.add(btnNewButton);
 
-		
 	}
-	
-
 }

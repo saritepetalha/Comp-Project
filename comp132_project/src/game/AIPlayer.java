@@ -2,10 +2,15 @@ package game;
 
 import java.util.ArrayList;
 
+import javax.swing.JOptionPane;
+
+import java.io.Serializable;
+import java.security.SecureRandom;
+
 import card.Card;
 import card.NormalCard;
 
-public class AIPlayer extends Player implements Move{
+public class AIPlayer extends Player implements Move, Serializable{
 
 	public AIPlayer(String name, ArrayList<Card> cards) {
 		super(name, cards);
@@ -60,5 +65,18 @@ public class AIPlayer extends Player implements Move{
 		else {
 			return NormalCard.colors[3];
 		}
+	}
+	@Override
+	public void UNO() {
+		SecureRandom secureRandom = new SecureRandom();
+		int randomNumber = secureRandom.nextInt(10);
+		if(randomNumber < 8) {
+			UNO = false;
+			JOptionPane.showMessageDialog(null, this.name + "said UNO", "UNO!", JOptionPane.INFORMATION_MESSAGE);
+		}
+		else {
+			UNO = true;
+		}
+		
 	}
 }

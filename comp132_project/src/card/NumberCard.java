@@ -1,15 +1,17 @@
 package card;
 
+import java.io.Serializable;
+
 import javax.swing.ImageIcon;
 
-public class NumberCard extends NormalCard{
+public class NumberCard extends NormalCard implements Serializable{
 	
 	protected int number;
 	
 	public NumberCard(String color, int number) {
 		super(color);
 		this.number = number;
-		
+		this.name = color + ":" + String.valueOf(number) + ":Number";
 	}
 
 	public int getNumber() {

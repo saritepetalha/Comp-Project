@@ -53,7 +53,7 @@ public class Game {
     }
 	public static boolean isValidMove(Card card, String currentSign, String currentColor) {
 		
-		if(card instanceof WildCard || card.getSign().equals(currentSign) || card.getColor() == currentColor) {
+		if(card instanceof WildCard || card.getSign().equals(currentSign) || card.getColor().equals(currentColor)) {
 			return true;
 		}
 		return false;

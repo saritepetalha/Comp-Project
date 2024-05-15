@@ -61,5 +61,4 @@ public class User {
 	public void setTotalScore(int totalScore) {
 		this.totalScore = totalScore;
 	}
-	
 }

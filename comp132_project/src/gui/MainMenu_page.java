@@ -8,6 +8,8 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+
 import java.awt.Font;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -79,11 +81,17 @@ public class MainMenu_page extends JFrame {
 		JButton btnNewButton = new JButton("New Game");
 		btnNewButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				setVisible(false);
-				int numPlayer = (int) spinner.getValue();
+
 				String sessionName = textField.getText();
-				GameSession_page gameSession_page = new GameSession_page(sessionName, numPlayer);
-				gameSession_page.setVisible(true);
+				if (sessionName.isEmpty()) {
+		            JOptionPane.showMessageDialog(contentPane, "Please enter a Session Name!", "Warning", JOptionPane.WARNING_MESSAGE);
+		        }
+				else {
+					setVisible(false);
+					int numPlayer = (int) spinner.getValue();
+					GameSession_page gameSession_page = new GameSession_page(sessionName, numPlayer);
+					gameSession_page.setVisible(true);
+				}
 			}
 		});
 		btnNewButton.setFont(new Font("Tahoma", Font.BOLD, 15));
@@ -91,6 +99,13 @@ public class MainMenu_page extends JFrame {
 		contentPane.add(btnNewButton);
 		
 		JButton btnLoadGame = new JButton("Load Game");
+		btnLoadGame.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				setVisible(false);
+				SaveGames saveGames = new SaveGames(username);
+				saveGames.setVisible(true);
+			}
+		});
 		btnLoadGame.setFont(new Font("Tahoma", Font.BOLD, 15));
 		btnLoadGame.setBounds(885, 620, 157, 21);
 		contentPane.add(btnLoadGame);

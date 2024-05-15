@@ -1,13 +1,15 @@
 package game;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 import card.Card;
 
-public class Player{
+public class Player implements Serializable{
 	
 	protected ArrayList<Card> playerCards;
 	protected String name;
+	protected boolean UNO = false;
 	
 	public Player(String name, ArrayList<Card> cards) {
 		this.name = name;
@@ -30,6 +32,23 @@ public class Player{
 		this.name = name;
 	}
 
-	
-
+	public void UNO() {
+		UNO = false;
+	}
+	public boolean getUNO() {
+		return UNO;
+	}
+	public void setUNO(boolean UNO) {
+		this.UNO = UNO;
+	}
+	public int checkStatus(){
+		
+		if(playerCards.size() == 1) {
+			return 1;
+		}
+		else if(playerCards.size() == 0) {
+			return 2;
+		}
+		return 0;
+	}
 }
