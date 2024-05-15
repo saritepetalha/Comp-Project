@@ -10,6 +10,7 @@ import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.awt.ScrollPane;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -65,11 +66,10 @@ public class GameSession_page extends JFrame{
 	private boolean direction = false;
 	private Game game;
 	private JScrollPane scrollPane_3;
+	private JScrollPane scrollPane_4;
 	private Timer timer;
 	private String sessionName;
-	private JLabel lblNewLabel_1;
-	private JLabel lblNewLabel_2;
-	private JLabel lblNewLabel_3;
+	
 
 	/**
 	 * Create the frame.
@@ -126,6 +126,7 @@ public class GameSession_page extends JFrame{
         	public void mouseClicked(MouseEvent e) {
         		if(isUserTurn) {
         			Game.drawCard(user, drawCards, discardCards);
+
         			displayPlayerCards(user.getPlayerCards(), scrollPane_2);
         		}
         	}
@@ -187,17 +188,11 @@ public class GameSession_page extends JFrame{
 		btnNewButton_1.setBounds(919, 367, 85, 21);
 		contentPane.add(btnNewButton_1);
 		
-		lblNewLabel_1 = new JLabel("Current Sign:" + currentSign);
-		lblNewLabel_1.setBounds(337, 329, 123, 30);
-		contentPane.add(lblNewLabel_1);
+		scrollPane_4 = new JScrollPane();
+		scrollPane_4.setBounds(342, 309, 123, 181);
+		contentPane.add(scrollPane_4);
+		showInfo(scrollPane_4);
 		
-		lblNewLabel_2 = new JLabel("Current Color:" + currentColor);
-		lblNewLabel_2.setBounds(337, 401, 123, 30);
-		contentPane.add(lblNewLabel_2);
-		
-		lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-		lblNewLabel_3.setBounds(521, 286, 123, 13);
-		contentPane.add(lblNewLabel_3);
 		
 		btnPenalize.addActionListener(new ActionListener() {
 	            @Override
@@ -242,9 +237,7 @@ public class GameSession_page extends JFrame{
         		if(isUserTurn) {
         			Game.drawCard(user, drawCards, discardCards);
         			displayPlayerCards(user.getPlayerCards(), scrollPane_2);
-        			lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-        			lblNewLabel_3.setBounds(521, 286, 123, 13);
-        			contentPane.add(lblNewLabel_3);
+        			
         		}
         	}
         });
@@ -290,6 +283,11 @@ public class GameSession_page extends JFrame{
         displayPlayerCards(user.getPlayerCards(), scrollPane_2);
 		addPlayers(players, scrollPane_3);
 		
+		scrollPane_4 = new JScrollPane();
+		scrollPane_4.setBounds(342, 309, 123, 181);
+		contentPane.add(scrollPane_4);
+		showInfo(scrollPane_4);
+		
 		JButton btnPenalize = new JButton("Penalize");
 		btnPenalize.setBounds(654, 418, 88, 41);
 		contentPane.add(btnPenalize);
@@ -312,17 +310,6 @@ public class GameSession_page extends JFrame{
 	            }
 	        });
 		
-		lblNewLabel_1 = new JLabel("Current Sign" + currentSign);
-		lblNewLabel_1.setBounds(337, 329, 88, 30);
-		contentPane.add(lblNewLabel_1);
-		
-		lblNewLabel_2 = new JLabel("Current Color" + currentColor);
-		lblNewLabel_2.setBounds(337, 401, 88, 30);
-		contentPane.add(lblNewLabel_2);
-		
-		lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-		lblNewLabel_3.setBounds(521, 286, 123, 13);
-		contentPane.add(lblNewLabel_3);
 	}
 
 	
@@ -386,13 +373,8 @@ public class GameSession_page extends JFrame{
 	        		        }
 	        		        
 	        		        displayPlayerCards(user.getPlayerCards(), scrollPane_2);
-	        		        lblNewLabel_1 = new JLabel("Current Sign" + currentSign);
-	        				lblNewLabel_1.setBounds(337, 329, 88, 30);
-	        				contentPane.add(lblNewLabel_1);
-	        				
-	        				lblNewLabel_2 = new JLabel("Current Color" + currentColor);
-	        				lblNewLabel_2.setBounds(337, 401, 88, 30);
-	        				contentPane.add(lblNewLabel_2);
+	        		        showInfo(scrollPane_4);
+	        		        
 	        		        if (currentSign == ActionCard.actionTypes[2]) {
 	        		        	startTour(true);
 	        		        }
@@ -441,6 +423,23 @@ public class GameSession_page extends JFrame{
 
 	    return cardPanel;
 	}
+	
+	private void showInfo(JScrollPane scrollPane) {
+		
+		JPanel panel = new JPanel(new GridLayout(3, 3));
+		JLabel color = new JLabel("Current Color: " + currentColor);
+		panel.add(color);
+		
+		JLabel sign = new JLabel("Current Sign: " + currentSign);
+		panel.add(sign);
+		
+		JLabel num = new JLabel("Number of Cards: " + drawCards.size());
+		panel.add(num);
+		
+		panel.setBounds(342, 309, 1134, 191);
+	    scrollPane.setViewportView(panel); 
+	}
+	
 	private void startTour(boolean skip) {
 		if (!direction && !skip) {
 			startTourHelper(0);
@@ -454,6 +453,7 @@ public class GameSession_page extends JFrame{
 		else {
 			startTourHelper(players.size() - 2);
 		}
+		showInfo(scrollPane_4);
 		isUserTurn = true;
 	}
 	private void startTourHelper(int current) {
@@ -472,13 +472,7 @@ public class GameSession_page extends JFrame{
 			    scrollPane_1.setViewportView(panel_1);
 				discardCards.add(choosenCard);
 				displayPlayerCards(user.getPlayerCards(), scrollPane_2);
-		        lblNewLabel_1 = new JLabel("Current Sign" + currentSign);
-				lblNewLabel_1.setBounds(337, 329, 88, 30);
-				contentPane.add(lblNewLabel_1);
-				
-				lblNewLabel_2 = new JLabel("Current Color" + currentColor);
-				lblNewLabel_2.setBounds(337, 401, 88, 30);
-				contentPane.add(lblNewLabel_2);
+		       
 				try {
 				    players.get(i).getPlayerCards().remove(choosenCard);
 				} catch (Exception e) {
@@ -529,17 +523,11 @@ public class GameSession_page extends JFrame{
 							
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
-							lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-							lblNewLabel_3.setBounds(521, 286, 123, 13);
-							contentPane.add(lblNewLabel_3);
 							displayPlayerCards(user.getPlayerCards(), scrollPane_2);
 							break;
 						}
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
-						lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-						lblNewLabel_3.setBounds(521, 286, 123, 13);
-						contentPane.add(lblNewLabel_3);
 					}
 				}
 				else if(choosenCard instanceof WildCard) {
@@ -551,22 +539,17 @@ public class GameSession_page extends JFrame{
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
-							lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-							lblNewLabel_3.setBounds(521, 286, 123, 13);
-							contentPane.add(lblNewLabel_3);
-							displayPlayerCards(user.getPlayerCards(), scrollPane_2);
 							break;
 						}
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
-						lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-						lblNewLabel_3.setBounds(521, 286, 123, 13);
-						contentPane.add(lblNewLabel_3);
+						
 					}
 				}
 				addPlayers(players, scrollPane_3);
+				showInfo(scrollPane_4);
 			}
 		}
 		else {
@@ -582,13 +565,7 @@ public class GameSession_page extends JFrame{
 			    scrollPane_1.setViewportView(panel_1);
 				discardCards.add(choosenCard);
 				displayPlayerCards(user.getPlayerCards(), scrollPane_2);
-		        lblNewLabel_1 = new JLabel("Current Sign" + currentSign);
-				lblNewLabel_1.setBounds(337, 329, 88, 30);
-				contentPane.add(lblNewLabel_1);
-				
-				lblNewLabel_2 = new JLabel("Current Color" + currentColor);
-				lblNewLabel_2.setBounds(337, 401, 88, 30);
-				contentPane.add(lblNewLabel_2);
+		        
 				try {
 				    players.get(i).getPlayerCards().remove(choosenCard);
 				} catch (Exception e) {
@@ -637,16 +614,11 @@ public class GameSession_page extends JFrame{
 						if(i == 0) {
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
-							lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-							lblNewLabel_3.setBounds(521, 286, 123, 13);
-							contentPane.add(lblNewLabel_3);
-							break;
+							
 						}
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
-						lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-						lblNewLabel_3.setBounds(521, 286, 123, 13);
-						contentPane.add(lblNewLabel_3);
+	        			
 					}
 				}
 				else if(choosenCard instanceof WildCard) {
@@ -658,22 +630,20 @@ public class GameSession_page extends JFrame{
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
-							lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-							lblNewLabel_3.setBounds(521, 286, 123, 13);
-							contentPane.add(lblNewLabel_3);
+
 							break;
 						}
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
-						lblNewLabel_3 = new JLabel("Number Of Cards:" + drawCards.size());
-						lblNewLabel_3.setBounds(521, 286, 123, 13);
-						contentPane.add(lblNewLabel_3);
+						
 					}
 					currentColor = players.get(i).makeChoose();
 					currentSign = null;
 				}
+				addPlayers(players, scrollPane_3);
+				showInfo(scrollPane_4);
 			}
 		}
 		if(version == 1) {
