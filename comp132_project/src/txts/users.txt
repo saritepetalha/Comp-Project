@@ -1,4 +1,4 @@
-user1,password1!,4,2,2,15
+user1,password1!,6,2,4,15
 user2,password1!,5,3,2,20
 user3,password1!,3,1,2,10
 user4,password1!,3,1,2,10

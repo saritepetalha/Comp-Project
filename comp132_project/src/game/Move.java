@@ -6,6 +6,6 @@ import card.Card;
 
 public interface Move {
 
-	public Card choosedCard(String sign, String color, ArrayList<Card> drawCards, ArrayList<Card> discards);
-	public String makeChoose();
+	String makeChoose();
+	Card choosedCard(String sign, String color, ArrayList<Card> drawCards, ArrayList<Card> discards, Log events);
 }

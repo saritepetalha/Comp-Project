@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -39,6 +40,7 @@ import javax.swing.Timer;
 import card.*;
 import game.AIPlayer;
 import game.Game;
+import game.Log;
 import game.Player;
 import user.User;
 
@@ -69,7 +71,7 @@ public class GameSession_page extends JFrame{
 	private JScrollPane scrollPane_4;
 	private Timer timer;
 	private String sessionName;
-	
+	private Log events;
 
 	/**
 	 * Create the frame.
@@ -82,12 +84,15 @@ public class GameSession_page extends JFrame{
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setBounds(100, 100, 1441, 952);
 		contentPane = new JPanel();
+		contentPane.setBackground(new Color(255, 0, 0));
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 
 		setContentPane(contentPane);
 		contentPane.setLayout(null);
 		
 		this.sessionName = sessionName;
+		events = new Log();
+		events.writeEvent("Game Started.");
 		
 		game = new Game();
 		drawCards = game.generateCards();
@@ -101,9 +106,12 @@ public class GameSession_page extends JFrame{
             String name = "Player " + String.valueOf(i + 1);
             players.add(new AIPlayer(name, playerCards));
         }
-		user = new Player("You", game.dealCards(7, drawCards));
+		user = new Player(MainMenu_page.thisUser.getUsername(), game.dealCards(7, drawCards));
 		discardCards = new ArrayList<>();
 		discardCards.add(drawCards.remove(0));
+		while(discardCards.get(discardCards.size()-1) instanceof WildCard) {
+			discardCards.add(drawCards.remove(0));
+		}
 		isUserTurn = true;
 		
 
@@ -120,13 +128,14 @@ public class GameSession_page extends JFrame{
                 g.drawImage(new ImageIcon(ImageResizer.resizeImage("img/backside.png", 120, 175)).getImage(), 0, 0, getWidth(), getHeight(), this);
             }
         };
+        panel.setBackground(new Color(255, 255, 255));
         scrollPane.setViewportView(panel);
         panel.addMouseListener(new MouseAdapter() {
         	@Override
         	public void mouseClicked(MouseEvent e) {
         		if(isUserTurn) {
         			Game.drawCard(user, drawCards, discardCards);
-
+        			events.writeEvent(user.getName() + "draw a card");
         			displayPlayerCards(user.getPlayerCards(), scrollPane_2);
         		}
         	}
@@ -153,8 +162,8 @@ public class GameSession_page extends JFrame{
         btnNewButton.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		if(user.checkStatus() == 1) {
-		        	user.UNO();
-		        	timer.stop();
+		        	user.UNO(events);
+		        	stopTimer();
 		        }
         	}
         });
@@ -162,7 +171,8 @@ public class GameSession_page extends JFrame{
 	    contentPane.add(btnNewButton);
 
 	    JLabel lblNewLabel = new JLabel(sessionName);
-	    lblNewLabel.setBounds(598, 10, 155, 30);
+	    lblNewLabel.setFont(new Font("Tahoma", Font.BOLD, 30));
+	    lblNewLabel.setBounds(540, 30, 352, 30);
 	    lblNewLabel.setHorizontalAlignment(JLabel.CENTER);
 	    contentPane.add(lblNewLabel);
 	    
@@ -174,6 +184,11 @@ public class GameSession_page extends JFrame{
 		addPlayers(players, scrollPane_3);
 		
 		JButton btnPenalize = new JButton("Penalize");
+		btnPenalize.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		stopTimer();
+        	}
+        });
 		btnPenalize.setBounds(654, 418, 88, 41);
 		contentPane.add(btnPenalize);
 		
@@ -182,24 +197,35 @@ public class GameSession_page extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(isUserTurn) {
 					saveGameToFile();
+					saveLog(events);
 				}
 			}
 		});
-		btnNewButton_1.setBounds(919, 367, 85, 21);
+		btnNewButton_1.setBounds(919, 367, 106, 21);
 		contentPane.add(btnNewButton_1);
 		
 		scrollPane_4 = new JScrollPane();
-		scrollPane_4.setBounds(342, 309, 123, 181);
-		contentPane.add(scrollPane_4);
+		scrollPane_4.setBounds(301, 339, 195, 120);
+		getContentPane().add(scrollPane_4, BorderLayout.CENTER);
 		showInfo(scrollPane_4);
 		
+		JButton btnNewButton_2 = new JButton("Exit");
+		btnNewButton_2.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int option = JOptionPane.showConfirmDialog(null, "Would you like to save the game before exiting?", "Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (option == JOptionPane.YES_OPTION) {
+                    saveGameToFile();
+                } else if (option == JOptionPane.NO_OPTION) {
+                }
+                MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
+                mainMenuPage.setVisible(true);
+                dispose();
+			}
+		});
+		btnNewButton_2.setBounds(919, 416, 106, 21);
+		contentPane.add(btnNewButton_2);
 		
-		btnPenalize.addActionListener(new ActionListener() {
-	            @Override
-	            public void actionPerformed(ActionEvent e) {
-	            	stopTimer();
-	            }
-	        });
 		
 	}
 	
@@ -217,6 +243,8 @@ public class GameSession_page extends JFrame{
 		
 		game = new Game();
 		loadGame(file);
+		String logFile = convertPath(file, "/Users/muham/git/Comp-Project/comp132_project/src",  "/Users/muham/git/Comp-Project/comp132_project/src/txts/logs");
+		events.setEvents(loadLog(logFile));
 		JScrollPane scrollPane = new JScrollPane();
         scrollPane.setSize(123, 181);
         scrollPane.setLocation(521, 309);
@@ -236,6 +264,7 @@ public class GameSession_page extends JFrame{
         	public void mouseClicked(MouseEvent e) {
         		if(isUserTurn) {
         			Game.drawCard(user, drawCards, discardCards);
+        			events.writeEvent(user.getName() + " draw a card.");
         			displayPlayerCards(user.getPlayerCards(), scrollPane_2);
         			
         		}
@@ -263,7 +292,7 @@ public class GameSession_page extends JFrame{
         btnNewButton.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		if(user.checkStatus() == 1) {
-		        	user.UNO();
+		        	user.UNO(events);
 		        	timer.stop();
 		        }
         	}
@@ -290,6 +319,12 @@ public class GameSession_page extends JFrame{
 		
 		JButton btnPenalize = new JButton("Penalize");
 		btnPenalize.setBounds(654, 418, 88, 41);
+		btnPenalize.addActionListener(new ActionListener() {
+	            @Override
+	            public void actionPerformed(ActionEvent e) {
+	            	stopTimer();
+	            }
+	        });
 		contentPane.add(btnPenalize);
 		
 		JButton btnNewButton_1 = new JButton("Load Game");
@@ -297,18 +332,32 @@ public class GameSession_page extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(isUserTurn) {
 					saveGameToFile();
+					saveLog(events);
 				}
 			}
 		});
 		btnNewButton_1.setBounds(919, 367, 85, 21);
 		contentPane.add(btnNewButton_1);
 		
-		btnPenalize.addActionListener(new ActionListener() {
-	            @Override
-	            public void actionPerformed(ActionEvent e) {
-	            	stopTimer();
-	            }
-	        });
+		JButton btnNewButton_2 = new JButton("Exit");
+		btnNewButton_2.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int option = JOptionPane.showConfirmDialog(null, "Would you like to save the game before exiting?", "Exit Game", JOptionPane.YES_NO_CANCEL_OPTION);
+                if (option == JOptionPane.YES_OPTION) {
+                    saveGameToFile(); 
+                } 
+                else if (option == JOptionPane.NO_OPTION) {
+                    System.exit(0);
+                }
+                MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
+                mainMenuPage.setVisible(true);
+                dispose();
+			}
+		});
+		btnNewButton_2.setBounds(919, 416, 85, 21);
+		contentPane.add(btnNewButton_2);
+		
 		
 	}
 
@@ -316,6 +365,7 @@ public class GameSession_page extends JFrame{
 	private void displayPlayerCards(ArrayList<Card> playerCards, JScrollPane scrollPane) {
 		GridLayout gridLayout = new GridLayout(1, 3, 10, 10);
 		JPanel playerPanel = new JPanel();
+		playerPanel.setBackground(new Color(255, 255, 255));
 		playerPanel.setLayout(new FlowLayout());
 	    for (Card card : playerCards) {
 	        JPanel cardPanel = panelMaker(card);
@@ -340,12 +390,18 @@ public class GameSession_page extends JFrame{
 	        		        user.getPlayerCards().remove(clickedCard);
 	        		        discardCards.add(clickedCard);
 	        		        isUserTurn = false;
+	        		        events.writeEvent(user.getName() + " played " + clickedCard.getName());
 	        		        if(user.checkStatus() == 1) {
 	        		        	user.setUNO(true);
 	        		            UNOTimer();
 	        		        }
 	        		        else if(user.checkStatus() == 2) {
+	        		        	endGame(true,calculateScore());
+	        					saveLog(events);
+	        		        	events.writeEvent(user.getName() + " won!" );
 	        					JOptionPane.showMessageDialog(null, user.getName() + " won " + sessionName, "Congratulations", JOptionPane.INFORMATION_MESSAGE);
+	        					MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
+	        		            mainMenuPage.setVisible(true);
 	        					dispose();
 	        				}
 	        		        else {
@@ -359,6 +415,7 @@ public class GameSession_page extends JFrame{
 	        					if (randomNumber < 3) {
 	        						String player = "Player " + String.valueOf(secureRandom.nextInt(1,players.size() + 1));
 	        						Game.drawCard(user, drawCards, discardCards);
+	        						events.writeEvent(player + " penalized " + user.getName());
 	        						JOptionPane.showMessageDialog(null, player + " penalized " + user.getName(), "Penalty", JOptionPane.INFORMATION_MESSAGE);
 	        					}
 	        		        }
@@ -369,6 +426,7 @@ public class GameSession_page extends JFrame{
 	        			                JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
 	        			        if (choice != JOptionPane.CLOSED_OPTION) {
 	        			        	currentColor = options[choice];
+	        			        	events.writeEvent(user.getName() + " changed color to " + currentColor );
 	        			        }
 	        		        }
 	        		        
@@ -401,6 +459,7 @@ public class GameSession_page extends JFrame{
 	            g.drawImage(image.getImage(), 0, 0, getWidth(), getHeight(), this);
 	        }
 	    };
+	    cardPanel.setBackground(new Color(255, 255, 255));
 	    cardPanel.setLayout(new BorderLayout());
 	    
 	    if(card instanceof NumberCard) {
@@ -426,18 +485,40 @@ public class GameSession_page extends JFrame{
 	
 	private void showInfo(JScrollPane scrollPane) {
 		
-		JPanel panel = new JPanel(new GridLayout(3, 3));
+		scrollPane.setViewportView(null);
+		
+		JPanel panel = new JPanel();
+		panel.setBackground(new Color(255, 255, 255));
+		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		
 		JLabel color = new JLabel("Current Color: " + currentColor);
+		color.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		panel.add(color);
 		
 		JLabel sign = new JLabel("Current Sign: " + currentSign);
+		sign.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		panel.add(sign);
 		
-		JLabel num = new JLabel("Number of Cards: " + drawCards.size());
+		JLabel num = new JLabel("Number of DrawCards: " + drawCards.size());
+		num.setFont(new Font("Tahoma", Font.PLAIN, 12));
 		panel.add(num);
 		
+		String d;
+		if(direction) {
+			d = "Clock-Wise";
+		}
+		else {
+			d = "Counter-Clock-Wise";
+		}
+		
+		JLabel direct = new JLabel("Direction: " + d);
+		direct.setFont(new Font("Tahoma", Font.PLAIN, 12));
+		panel.add(direct);
+		
 		panel.setBounds(342, 309, 1134, 191);
-	    scrollPane.setViewportView(panel); 
+		scrollPane.setViewportView(panel);
+	    scrollPane.revalidate();
+	    scrollPane.repaint();
 	}
 	
 	private void startTour(boolean skip) {
@@ -462,7 +543,7 @@ public class GameSession_page extends JFrame{
 		if (!direction) {
 			for(int i = current; i < players.size(); i++) {
 				
-				Card choosenCard = players.get(i).choosedCard(currentSign, currentColor, drawCards, discardCards);
+				Card choosenCard = players.get(i).choosedCard(currentSign, currentColor, drawCards, discardCards, events);
 				currentColor = choosenCard.getColor();
 				currentSign = choosenCard.getSign();
 				panel_1.removeAll();
@@ -471,6 +552,7 @@ public class GameSession_page extends JFrame{
 				scrollPane_1.repaint();
 			    scrollPane_1.setViewportView(panel_1);
 				discardCards.add(choosenCard);
+				events.writeEvent(players.get(i).getName() + " played " + choosenCard.getName());
 				displayPlayerCards(user.getPlayerCards(), scrollPane_2);
 		       
 				try {
@@ -480,9 +562,14 @@ public class GameSession_page extends JFrame{
 				    e.printStackTrace();
 				}
 				if(players.get(i).checkStatus() == 1) {
-					players.get(i).UNO();
+					players.get(i).UNO(events);
 				}
 				else if(players.get(i).checkStatus() == 2) {
+					endGame(false,0);
+					saveLog(events);
+					MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
+		            mainMenuPage.setVisible(true);
+		            events.writeEvent(players.get(i).getName() + " won!");
 					JOptionPane.showMessageDialog(this, players.get(i).getName() + " won " + sessionName, "Congratulations", JOptionPane.INFORMATION_MESSAGE);
 					dispose();
 				}
@@ -492,9 +579,19 @@ public class GameSession_page extends JFrame{
 				if(players.get(i).getUNO()) {
 					SecureRandom secureRandom = new SecureRandom();
 					int randomNumber = secureRandom.nextInt(4);
-					if (randomNumber < 3) {
-						String player = "Player " + String.valueOf(secureRandom.nextInt(1,players.size() + 1));
-						JOptionPane.showMessageDialog(this, player + "penalized" + players.get(i).getName(), "Penalty", JOptionPane.WARNING_MESSAGE);
+					if (randomNumber < 3 && players.size() == 1) {
+						int num = secureRandom.nextInt(1,players.size() + 1);
+						if(num == i) {
+							if (num == 1) {
+								num = 2;
+							}
+							if(num == players.size()) {
+								num = players.size() - 1;
+							}
+						}
+						String player = "Player " + String.valueOf(num);
+						JOptionPane.showMessageDialog(this, player + " penalized " + players.get(i).getName(), "Penalty", JOptionPane.INFORMATION_MESSAGE);
+						Game.drawCard(players.get(i),drawCards, discardCards);
 					}
 					else {
 						startTimer(players.get(i));
@@ -503,12 +600,14 @@ public class GameSession_page extends JFrame{
 				
 				if(choosenCard instanceof ActionCard) {
 					if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[1]) {
+						events.writeEvent(players.get(i).getName() + " cahnged the direction");
 						direction = true;
 						last = i - 1;
 						version = 1;
 						break;
 					}
 					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[2]) {
+						events.writeEvent(players.get(i).getName() + " played Skip Card.");
 						if(i == players.size() - 1) {
 							last = 0;
 							version = 1;
@@ -519,15 +618,18 @@ public class GameSession_page extends JFrame{
 						break;
 					}
 					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[0]) {
+						events.writeEvent(players.get(i).getName() + " played Draw Card.");
 						if(i == players.size() - 1) {
 							
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
+							events.writeEvent(user.getName() + " draw two Card!");
 							displayPlayerCards(user.getPlayerCards(), scrollPane_2);
 							break;
 						}
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
+						events.writeEvent(players.get(i + 1) + " draw two Card!");
 					}
 				}
 				else if(choosenCard instanceof WildCard) {
@@ -539,12 +641,14 @@ public class GameSession_page extends JFrame{
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
+							events.writeEvent(user.getName() + " draw four Card!");
 							break;
 						}
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
+						events.writeEvent(players.get(i + 1) + " draw four Card!");
 						
 					}
 				}
@@ -555,7 +659,7 @@ public class GameSession_page extends JFrame{
 		else {
 			for(int i = current; i >=0; i--) {
 				
-				Card choosenCard = players.get(i).choosedCard(currentSign, currentColor, drawCards, discardCards);
+				Card choosenCard = players.get(i).choosedCard(currentSign, currentColor, drawCards, discardCards, events);
 				currentColor = choosenCard.getColor();
 				currentSign = choosenCard.getSign();
 				panel_1.removeAll();
@@ -564,6 +668,7 @@ public class GameSession_page extends JFrame{
 				scrollPane_1.repaint();
 			    scrollPane_1.setViewportView(panel_1);
 				discardCards.add(choosenCard);
+				events.writeEvent(players.get(i).getName() + " played " + choosenCard.getName());
 				displayPlayerCards(user.getPlayerCards(), scrollPane_2);
 		        
 				try {
@@ -573,9 +678,14 @@ public class GameSession_page extends JFrame{
 				    e.printStackTrace();
 				}
 				if(players.get(i).checkStatus() == 1) {
-					players.get(i).UNO();
+					players.get(i).UNO(events);
 				}
 				else if(players.get(i).checkStatus() == 2) {
+					endGame(false,0);
+					saveLog(events);
+					MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
+		            mainMenuPage.setVisible(true);
+		            events.writeEvent(players.get(i).getName() + " won!");
 					JOptionPane.showMessageDialog(this, players.get(i).getName() + " won " + sessionName, "Congratulations", JOptionPane.INFORMATION_MESSAGE);
 					dispose();
 				}
@@ -585,9 +695,19 @@ public class GameSession_page extends JFrame{
 				if(players.get(i).getUNO()) {
 					SecureRandom secureRandom = new SecureRandom();
 					int randomNumber = secureRandom.nextInt(4);
-					if (randomNumber < 3) {
-						String player = "Player " + String.valueOf(secureRandom.nextInt(1,players.size() + 1));
+					if (randomNumber < 3 && players.size() == 1) {
+						int num = secureRandom.nextInt(1,players.size() + 1);
+						if(num == i) {
+							if (num == 1) {
+								num = 2;
+							}
+							if(num == players.size()) {
+								num = players.size() - 1;
+							}
+						}
+						String player = "Player " + String.valueOf(num);
 						JOptionPane.showMessageDialog(this, player + " penalized " + players.get(i).getName(), "Penalty", JOptionPane.INFORMATION_MESSAGE);
+						Game.drawCard(players.get(i),drawCards, discardCards);
 					}
 					else {
 						startTimer(players.get(i));
@@ -596,12 +716,14 @@ public class GameSession_page extends JFrame{
 				addPlayers(players, scrollPane_3);
 				if(choosenCard instanceof ActionCard) {
 					if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[1]) {
+						events.writeEvent(players.get(i).getName() + " cahnged the direction");
 						direction = false;
 						last = i + 1;
 						version = 1;
 						break;
 					}
 					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[2]) {
+						events.writeEvent(players.get(i).getName() + " played Skip Card.");
 						if(i == 0) {
 							last = players.size() - 1;
 							version = 1;
@@ -611,13 +733,16 @@ public class GameSession_page extends JFrame{
 						last = i - 2;
 					}
 					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[0]) {
+						events.writeEvent(players.get(i).getName() + " played Draw Card.");
 						if(i == 0) {
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
+							events.writeEvent(user.getName() + " draw two Card!");
 							
 						}
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
+						events.writeEvent(players.get(i - 1) + " draw two Card!");
 	        			
 					}
 				}
@@ -630,6 +755,7 @@ public class GameSession_page extends JFrame{
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
+							events.writeEvent(user.getName() + " draw four Card!");
 
 							break;
 						}
@@ -637,6 +763,7 @@ public class GameSession_page extends JFrame{
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
+						events.writeEvent(players.get(i - 1) + " draw four Card!");
 						
 					}
 					currentColor = players.get(i).makeChoose();
@@ -653,6 +780,7 @@ public class GameSession_page extends JFrame{
 	}
 	private void addPlayers(ArrayList<AIPlayer> players, JScrollPane scrollPane) {
 	    JPanel playerPanel = new JPanel(new GridLayout(3, 3)); 
+	    playerPanel.setBackground(new Color(255, 255, 255));
 
 	    for (int i = 1; i <= players.size(); i++) {
 	        String playerName = "Player " + i + " Cards: " + String.valueOf(players.get(i-1).getPlayerCards().size()); 
@@ -671,6 +799,7 @@ public class GameSession_page extends JFrame{
             @Override
             public void actionPerformed(ActionEvent e) {
 	            game.drawCard(player, drawCards, discardCards);
+	            events.writeEvent(user.getName() + " penalized " + player.getName());
 	            JOptionPane.showMessageDialog(null, user.getName() + "penalized" + player.getName(), "Penalty", JOptionPane.WARNING_MESSAGE);
             }
         });
@@ -687,6 +816,8 @@ public class GameSession_page extends JFrame{
 				if (randomNumber < 3) {
 					String player = "Player " + String.valueOf(secureRandom.nextInt(1,players.size() + 1));
 					Game.drawCard(user, drawCards, discardCards);
+		            events.writeEvent(player + " penalized " + user.getName());
+					
 					JOptionPane.showMessageDialog(null, player + " penalized " + user.getName(), "Penalty", JOptionPane.INFORMATION_MESSAGE);
 				}
             }
@@ -728,6 +859,7 @@ public class GameSession_page extends JFrame{
     		writer.write("\nCurrentSign;" + currentSign);
     		writer.write("\nIsUserTurn;" + String.valueOf(isUserTurn));
     		writer.write("\nDirection;" + String.valueOf(direction));
+    		writer.write("\nSessionName;" + sessionName);
     		
     		writer.close();
             
@@ -783,6 +915,9 @@ public class GameSession_page extends JFrame{
                 else if(elm[0].equals("Direction")) {
                     direction = Boolean.valueOf(elm[1]);
                 }
+                else if(elm[0].equals("SessionName")) {
+                	sessionName = elm[1];
+                }
             }
     		
 		}
@@ -821,6 +956,110 @@ public class GameSession_page extends JFrame{
     		players.add((AIPlayer) player);
     	}	
     	return players;
+    }
+    private void endGame(boolean result, int score) {
+    	
+    	File file = new File("/Users/muham/git/Comp-Project/comp132_project/src/txts/users.txt");
+    	
+    	try {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+            StringBuilder fileContent = new StringBuilder();
+            
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                String username = parts[0];
+                
+                if (username.equals(MainMenu_page.thisUser.getUsername())) {
+                    int gamesPlayed = Integer.parseInt(parts[2]);
+                    int wins = Integer.parseInt(parts[3]);
+                    int losses = Integer.parseInt(parts[4]);
+                    int totalScore = Integer.parseInt(parts[5]);
+                    
+                    gamesPlayed++;
+                    if(result) {
+                    	wins++;
+                    }
+                    else {
+                    	losses++;
+                    }
+                    totalScore+= score;
+                    
+                    line = String.join(",", username, parts[1], String.valueOf(gamesPlayed), String.valueOf(wins), String.valueOf(losses), String.valueOf(totalScore));
+                }
+                
+                fileContent.append(line).append("\n");
+            }
+            
+            br.close();
+            
+            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
+            bw.write(fileContent.toString());
+            bw.close();
+            
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    private int calculateScore() {
+    	int score = 0;
+    	for(Player player : players) {
+    		for(Card card : player.getPlayerCards()) {
+    			if(card instanceof NumberCard) {
+    				score += ((NumberCard) card).getNumber();
+    			}
+    			else if(card instanceof ActionCard) {
+    				score += 20;
+    			}
+    			else {
+    				score += 50;
+    			}
+    		}
+    	}
+    	return score;
+    }
+    
+    private void saveLog(Log events) {
+    	
+    	try {
+    		File userDirectory = new File("/Users/muham/git/Comp-Project/comp132_project/src/txts/logs/" + MainMenu_page.thisUser.getUsername());
+            if (!userDirectory.exists()) {
+                userDirectory.mkdirs();
+            }
+           String filePath = userDirectory.getAbsolutePath() + File.separator + sessionName +  ".txt";
+           BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, false));
+           writer.write(events.getEvents());
+           writer.close();
+    	}
+    	catch (IOException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private String loadLog(String fileName) {
+    	
+    	StringBuilder log = new StringBuilder();
+    	
+    	try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+            	log.append(line).append("\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    	String logs = log.toString();
+    	return logs;
+    }
+    
+    public static String convertPath(String originalPath, String originalRoot, String newRoot) {
+        if (originalPath.startsWith(originalRoot)) {
+            String relativePath = originalPath.substring(originalRoot.length());
+            return newRoot + relativePath;
+        } else {
+            throw new IllegalArgumentException("Original path doesn't start with the original root.");
+        }
     }
 }
 

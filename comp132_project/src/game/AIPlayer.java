@@ -18,7 +18,7 @@ public class AIPlayer extends Player implements Move, Serializable{
 	}
 	
 	@Override
-	public Card choosedCard(String sign, String color, ArrayList<Card> drawCards, ArrayList<Card> discards) {
+	public Card choosedCard(String sign, String color, ArrayList<Card> drawCards, ArrayList<Card> discards, Log events) {
 		
 		for (Card card : playerCards) {
 			if (Game.isValidMove(card, sign, color)) {
@@ -26,7 +26,8 @@ public class AIPlayer extends Player implements Move, Serializable{
 			}
 		}
 		Game.drawCard(this, drawCards, discards);
-		return choosedCard(sign, color, drawCards, discards);
+		events.writeEvent(this.name + " draw a card.");
+		return choosedCard(sign, color, drawCards, discards, events);
 	}
 
 	@Override
@@ -67,16 +68,18 @@ public class AIPlayer extends Player implements Move, Serializable{
 		}
 	}
 	@Override
-	public void UNO() {
+	public void UNO(Log events) {
 		SecureRandom secureRandom = new SecureRandom();
 		int randomNumber = secureRandom.nextInt(10);
 		if(randomNumber < 8) {
 			UNO = false;
 			JOptionPane.showMessageDialog(null, this.name + "said UNO", "UNO!", JOptionPane.INFORMATION_MESSAGE);
+			events.writeEvent(name + " said UNO");
 		}
 		else {
 			UNO = true;
 		}
 		
 	}
+
 }

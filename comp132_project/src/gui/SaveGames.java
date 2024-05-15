@@ -13,12 +13,18 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
+import java.awt.Color;
+import javax.swing.JButton;
+import java.awt.Font;
+import java.awt.event.ActionListener;
+import java.awt.event.ActionEvent;
 
 public class SaveGames extends JFrame {
 
     private static final long serialVersionUID = 1L;
     private JPanel contentPane;
     private JList<String> list;
+    private JButton btnNewButton;
 
     /**
      * Create the frame.
@@ -27,6 +33,7 @@ public class SaveGames extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 847, 680);
         contentPane = new JPanel();
+        contentPane.setBackground(new Color(255, 0, 0));
         contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
         setContentPane(contentPane);
         contentPane.setLayout(null);
@@ -47,6 +54,18 @@ public class SaveGames extends JFrame {
         JScrollPane scrollPane = new JScrollPane(list);
         scrollPane.setBounds(10, 10, 800, 500);
         contentPane.add(scrollPane);
+        
+        btnNewButton = new JButton("Go Back");
+        btnNewButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
+		        mainMenuPage.setVisible(true);
+		        dispose();
+        	}
+        });
+        btnNewButton.setFont(new Font("Tahoma", Font.PLAIN, 15));
+        btnNewButton.setBounds(327, 550, 177, 51);
+        contentPane.add(btnNewButton);
 
         list.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseClicked(java.awt.event.MouseEvent evt) {

@@ -32,7 +32,8 @@ public class Player implements Serializable{
 		this.name = name;
 	}
 
-	public void UNO() {
+	public void UNO(Log events) {
+		events.writeEvent(name + " said UNO!");
 		UNO = false;
 	}
 	public boolean getUNO() {
