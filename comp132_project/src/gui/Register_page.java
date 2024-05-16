@@ -44,21 +44,6 @@ public class Register_page extends JFrame {
 	private JPasswordField passwordField;
 	private JTextField textField;
 
-	/**
-	 * Launch the application.
-	 */
-	public static void main(String[] args) {
-		EventQueue.invokeLater(new Runnable() {
-			public void run() {
-				try {
-					Register_page frame = new Register_page();
-					frame.setVisible(true);
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-		});
-	}
 
 	/**
 	 * Create the frame.
@@ -131,7 +116,7 @@ public class Register_page extends JFrame {
                 	
                 	try {
                 		BufferedWriter writer = new BufferedWriter(new FileWriter("/Users/muham/git/Comp-Project/comp132_project/src/txts/users.txt", true));
-                		writer.write("\n" + username + "," + password + "," + "0"+ "," + "0"+ "," + "0"+ "," + "0" );
+                		writer.write(username + "," + password + "," + "0"+ "," + "0"+ "," + "0"+ "," + "0" );
 						writer.close();
 						JOptionPane.showMessageDialog(Register_page.this, "Registration successful! User added.");
                 	}

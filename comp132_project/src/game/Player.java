@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import card.Card;
 
-public class Player implements Serializable{
+public class Player{
 	
 	protected ArrayList<Card> playerCards;
 	protected String name;
@@ -31,7 +31,13 @@ public class Player implements Serializable{
 	public void setName(String name) {
 		this.name = name;
 	}
-
+	
+	/**
+	 * Indicates that the player has declared UNO.
+	 *
+	 * @param events The log where the UNO declaration event will be recorded.
+	 */
+	
 	public void UNO(Log events) {
 		events.writeEvent(name + " said UNO!");
 		UNO = false;
@@ -42,6 +48,13 @@ public class Player implements Serializable{
 	public void setUNO(boolean UNO) {
 		this.UNO = UNO;
 	}
+	/**
+	 * Checks the status of the player's hand.
+	 *
+	 * @return 1 if the player has only one card left,
+	 *         2 if the player has no cards left,
+	 *         0 otherwise.
+	 */
 	public int checkStatus(){
 		
 		if(playerCards.size() == 1) {

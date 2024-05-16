@@ -135,7 +135,7 @@ public class GameSession_page extends JFrame{
         	public void mouseClicked(MouseEvent e) {
         		if(isUserTurn) {
         			Game.drawCard(user, drawCards, discardCards);
-        			events.writeEvent(user.getName() + "draw a card");
+        			events.writeEvent(user.getName() + " draw a card");
         			displayPlayerCards(user.getPlayerCards(), scrollPane_2);
         		}
         	}
@@ -181,7 +181,7 @@ public class GameSession_page extends JFrame{
         getContentPane().add(scrollPane_3, BorderLayout.CENTER);
         
         displayPlayerCards(user.getPlayerCards(), scrollPane_2);
-		addPlayers(players, scrollPane_3);
+		game.addPlayers(players, scrollPane_3);
 		
 		JButton btnPenalize = new JButton("Penalize");
 		btnPenalize.addActionListener(new ActionListener() {
@@ -197,7 +197,7 @@ public class GameSession_page extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(isUserTurn) {
 					saveGameToFile();
-					saveLog(events);
+					game.saveLog(events, sessionName);
 				}
 			}
 		});
@@ -243,8 +243,8 @@ public class GameSession_page extends JFrame{
 		
 		game = new Game();
 		loadGame(file);
-		String logFile = convertPath(file, "/Users/muham/git/Comp-Project/comp132_project/src",  "/Users/muham/git/Comp-Project/comp132_project/src/txts/logs");
-		events.setEvents(loadLog(logFile));
+		String logFile = Game.convertPath(file, "/Users/muham/git/Comp-Project/comp132_project/src",  "/Users/muham/git/Comp-Project/comp132_project/src/txts/logs");
+		events.setEvents(game.loadLog(logFile));
 		JScrollPane scrollPane = new JScrollPane();
         scrollPane.setSize(123, 181);
         scrollPane.setLocation(521, 309);
@@ -310,7 +310,7 @@ public class GameSession_page extends JFrame{
         getContentPane().add(scrollPane_3, BorderLayout.CENTER);
         
         displayPlayerCards(user.getPlayerCards(), scrollPane_2);
-		addPlayers(players, scrollPane_3);
+		game.addPlayers(players, scrollPane_3);
 		
 		scrollPane_4 = new JScrollPane();
 		scrollPane_4.setBounds(342, 309, 123, 181);
@@ -332,7 +332,7 @@ public class GameSession_page extends JFrame{
 			public void actionPerformed(ActionEvent e) {
 				if(isUserTurn) {
 					saveGameToFile();
-					saveLog(events);
+					game.saveLog(events, sessionName);
 				}
 			}
 		});
@@ -361,7 +361,12 @@ public class GameSession_page extends JFrame{
 		
 	}
 
-	
+	/**
+	 * Displays the player's cards on the GUI, allowing the player to select a card to play.
+	 * 
+	 * @param playerCards The list of cards held by the player.
+	 * @param scrollPane  The scroll pane component to display the cards within.
+	 */
 	private void displayPlayerCards(ArrayList<Card> playerCards, JScrollPane scrollPane) {
 		GridLayout gridLayout = new GridLayout(1, 3, 10, 10);
 		JPanel playerPanel = new JPanel();
@@ -396,8 +401,8 @@ public class GameSession_page extends JFrame{
 	        		            UNOTimer();
 	        		        }
 	        		        else if(user.checkStatus() == 2) {
-	        		        	endGame(true,calculateScore());
-	        					saveLog(events);
+	        		        	game.endGame(true,game.calculateScore(players));
+	        					game.saveLog(events, sessionName);
 	        		        	events.writeEvent(user.getName() + " won!" );
 	        					JOptionPane.showMessageDialog(null, user.getName() + " won " + sessionName, "Congratulations", JOptionPane.INFORMATION_MESSAGE);
 	        					MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
@@ -428,6 +433,38 @@ public class GameSession_page extends JFrame{
 	        			        	currentColor = options[choice];
 	        			        	events.writeEvent(user.getName() + " changed color to " + currentColor );
 	        			        }
+	        			        if(((WildCard) clickedCard).getType().equals(WildCard.types[1]) ) {
+	        			        	events.writeEvent(user.getName() + " played Draw+4 Card.");
+	        						if(direction) {
+	        							game.drawCard(players.get(players.size()-1), drawCards, discardCards);
+	        							game.drawCard(players.get(players.size()-1), drawCards, discardCards);
+	        							game.drawCard(players.get(players.size()-1), drawCards, discardCards);
+	        							game.drawCard(players.get(players.size()-1), drawCards, discardCards);
+	        						}
+	        						else {
+	        							game.drawCard(players.get(0), drawCards, discardCards);
+	        							game.drawCard(players.get(0), drawCards, discardCards);
+	        							game.drawCard(players.get(0), drawCards, discardCards);
+	        							game.drawCard(players.get(0), drawCards, discardCards);
+	        						}
+	        			        }
+	        		        }
+	        		        else if(clickedCard instanceof ActionCard) {
+	        		        	if(((ActionCard) clickedCard).getAction().equals(ActionCard.actionTypes[1]) ) {
+	        						events.writeEvent(user.getName() + " cahnged the direction");
+	        						direction = !direction;
+	        					}
+	        					else if(((ActionCard) clickedCard).getAction().equals(ActionCard.actionTypes[0]) ) {
+	        						events.writeEvent(user.getName() + " played Draw Card.");
+	        						if(direction) {
+	        							game.drawCard(players.get(players.size()-1), drawCards, discardCards);
+	        							game.drawCard(players.get(players.size()-1), drawCards, discardCards);
+	        						}
+	        						else {
+	        							game.drawCard(players.get(0), drawCards, discardCards);
+	        							game.drawCard(players.get(0), drawCards, discardCards);
+	        						}
+	        					}
 	        		        }
 	        		        
 	        		        displayPlayerCards(user.getPlayerCards(), scrollPane_2);
@@ -435,6 +472,7 @@ public class GameSession_page extends JFrame{
 	        		        
 	        		        if (currentSign == ActionCard.actionTypes[2]) {
 	        		        	startTour(true);
+	        		        	events.writeEvent(user.getName() + " played Skip Card.");
 	        		        }
 	        		        else {
 	        		        	startTour(false);
@@ -449,6 +487,12 @@ public class GameSession_page extends JFrame{
 
 	}
 	
+	/**
+	 * Creates a JPanel for the given card, with appropriate image and layout based on the card type.
+	 * 
+	 * @param card The card object for which the panel is created.
+	 * @return JPanel representing the card.
+	 */
 	private JPanel panelMaker(Card card) {
 	    
 	    ImageIcon image = card.getImage();
@@ -483,6 +527,11 @@ public class GameSession_page extends JFrame{
 	    return cardPanel;
 	}
 	
+	/**
+	 * Displays game information such as current color, sign, number of draw cards, and direction in a JScrollPane.
+	 * 
+	 * @param scrollPane The JScrollPane to display the information.
+	 */
 	private void showInfo(JScrollPane scrollPane) {
 		
 		scrollPane.setViewportView(null);
@@ -521,6 +570,11 @@ public class GameSession_page extends JFrame{
 	    scrollPane.repaint();
 	}
 	
+	/**
+	 * Starts the game tour based on the current direction and whether to skip players.
+	 * 
+	 * @param skip If true, skips the next player in the tour.
+	 */
 	private void startTour(boolean skip) {
 		if (!direction && !skip) {
 			startTourHelper(0);
@@ -537,6 +591,12 @@ public class GameSession_page extends JFrame{
 		showInfo(scrollPane_4);
 		isUserTurn = true;
 	}
+	/**
+	 * Helper method to start the game tour from the specified current player index.
+	 * 
+	 * @param current The index of the current player in the players list.
+	 */
+	
 	private void startTourHelper(int current) {
 		int version = 0;
 		int last = 0;
@@ -565,8 +625,8 @@ public class GameSession_page extends JFrame{
 					players.get(i).UNO(events);
 				}
 				else if(players.get(i).checkStatus() == 2) {
-					endGame(false,0);
-					saveLog(events);
+					game.endGame(false,0);
+					game.saveLog(events, sessionName);
 					MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
 		            mainMenuPage.setVisible(true);
 		            events.writeEvent(players.get(i).getName() + " won!");
@@ -599,14 +659,14 @@ public class GameSession_page extends JFrame{
 				}
 				
 				if(choosenCard instanceof ActionCard) {
-					if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[1]) {
+					if(((ActionCard) choosenCard).getAction().equals(ActionCard.actionTypes[1]) ) {
 						events.writeEvent(players.get(i).getName() + " cahnged the direction");
 						direction = true;
 						last = i - 1;
 						version = 1;
 						break;
 					}
-					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[2]) {
+					else if(((ActionCard) choosenCard).getAction().equals(ActionCard.actionTypes[2]) ) {
 						events.writeEvent(players.get(i).getName() + " played Skip Card.");
 						if(i == players.size() - 1) {
 							last = 0;
@@ -617,7 +677,7 @@ public class GameSession_page extends JFrame{
 						version = 1;
 						break;
 					}
-					else if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[0]) {
+					else if(((ActionCard) choosenCard).getAction().equals(ActionCard.actionTypes[0]) ) {
 						events.writeEvent(players.get(i).getName() + " played Draw Card.");
 						if(i == players.size() - 1) {
 							
@@ -629,7 +689,7 @@ public class GameSession_page extends JFrame{
 						}
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
-						events.writeEvent(players.get(i + 1) + " draw two Card!");
+						events.writeEvent(players.get(i + 1).getName() + " draw two Card!");
 					}
 				}
 				else if(choosenCard instanceof WildCard) {
@@ -648,11 +708,11 @@ public class GameSession_page extends JFrame{
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
 						Game.drawCard(players.get(i + 1), drawCards, discardCards);
-						events.writeEvent(players.get(i + 1) + " draw four Card!");
+						events.writeEvent(players.get(i + 1).getName() + " draw four Card!");
 						
 					}
 				}
-				addPlayers(players, scrollPane_3);
+				game.addPlayers(players, scrollPane_3);
 				showInfo(scrollPane_4);
 			}
 		}
@@ -681,8 +741,8 @@ public class GameSession_page extends JFrame{
 					players.get(i).UNO(events);
 				}
 				else if(players.get(i).checkStatus() == 2) {
-					endGame(false,0);
-					saveLog(events);
+					game.endGame(false,0);
+					game.saveLog(events, sessionName);
 					MainMenu_page mainMenuPage = new MainMenu_page(MainMenu_page.thisUser.getUsername());
 		            mainMenuPage.setVisible(true);
 		            events.writeEvent(players.get(i).getName() + " won!");
@@ -713,7 +773,7 @@ public class GameSession_page extends JFrame{
 						startTimer(players.get(i));
 					}
 				}
-				addPlayers(players, scrollPane_3);
+				game.addPlayers(players, scrollPane_3);
 				if(choosenCard instanceof ActionCard) {
 					if(((ActionCard) choosenCard).getAction() == ActionCard.actionTypes[1]) {
 						events.writeEvent(players.get(i).getName() + " cahnged the direction");
@@ -738,11 +798,12 @@ public class GameSession_page extends JFrame{
 							Game.drawCard(user, drawCards, discardCards);
 							Game.drawCard(user, drawCards, discardCards);
 							events.writeEvent(user.getName() + " draw two Card!");
+							break;
 							
 						}
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
-						events.writeEvent(players.get(i - 1) + " draw two Card!");
+						events.writeEvent(players.get(i - 1).getName() + " draw two Card!");
 	        			
 					}
 				}
@@ -763,13 +824,13 @@ public class GameSession_page extends JFrame{
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
 						Game.drawCard(players.get(i - 1), drawCards, discardCards);
-						events.writeEvent(players.get(i - 1) + " draw four Card!");
+						events.writeEvent(players.get(i - 1).getName() + " draw four Card!");
 						
 					}
 					currentColor = players.get(i).makeChoose();
 					currentSign = null;
 				}
-				addPlayers(players, scrollPane_3);
+				game.addPlayers(players, scrollPane_3);
 				showInfo(scrollPane_4);
 			}
 		}
@@ -778,22 +839,16 @@ public class GameSession_page extends JFrame{
 		}
 		
 	}
-	private void addPlayers(ArrayList<AIPlayer> players, JScrollPane scrollPane) {
-	    JPanel playerPanel = new JPanel(new GridLayout(3, 3)); 
-	    playerPanel.setBackground(new Color(255, 255, 255));
-
-	    for (int i = 1; i <= players.size(); i++) {
-	        String playerName = "Player " + i + " Cards: " + String.valueOf(players.get(i-1).getPlayerCards().size()); 
-	        JLabel playerLabel = new JLabel(playerName); 
-	        playerPanel.add(playerLabel); 
-
-	    }
-
-	    playerPanel.setBounds(170, 50, 1134, 191);
-	    scrollPane.setViewportView(playerPanel); 
-	    
-	}
 	
+	
+	/**
+	 * Starts a timer to enforce a player to draw a card within a specified duration.
+	 * The timer sets a 2-second duration for the player passed as a parameter.
+	 * If the player fails to draw a card within the specified time, a penalty is applied to the player.
+	 * This penalty is enforced through the game.drawCard() function and displayed to the user as an informational message.
+	 *
+	 * @param player The player who will draw the card.
+	 */
 	public void startTimer(Player player) {
         timer = new Timer(2000, new ActionListener() {
             @Override
@@ -807,6 +862,13 @@ public class GameSession_page extends JFrame{
         timer.start(); 
     }
 	
+	/**
+	 * Starts a timer to enforce a penalty if a player fails to call UNO within a specified duration.
+	 * The timer sets a 2-second duration for the player.
+	 * If the player fails to call UNO within the specified time, a penalty is applied.
+	 * The penalty involves the user drawing a card and is recorded in the game events.
+	 * Additionally, an informational message is displayed to inform the user about the penalty.
+	 */
 	public void UNOTimer() {
 		timer = new Timer(2000, new ActionListener() {
             @Override
@@ -825,6 +887,11 @@ public class GameSession_page extends JFrame{
 		timer.setRepeats(false);
         timer.start();
 	}
+	
+	/**
+	 * Stops the timer if it is currently running.
+	 * Checks if the timer instance is not null and is currently running before stopping it.
+	 */
 	public void stopTimer() {
 	        if (timer != null && timer.isRunning()) {
 	            timer.stop(); 
@@ -832,10 +899,14 @@ public class GameSession_page extends JFrame{
 	    }
 	
 	/**
-     * 
-     *
-     * @param 
-     */
+	 * Saves the current game state to a text file.
+	 * Writes the game data including draw cards, discard cards, player information, current color, current sign,
+	 * turn status, direction, and session name to a text file.
+	 * The file is saved in the directory specific to the user's username.
+	 * If the directory does not exist, it creates one.
+	 *
+	 * @throws IOException if an I/O error occurs while writing to the file
+	 */
     private void saveGameToFile() {
     	
     	
@@ -848,13 +919,13 @@ public class GameSession_page extends JFrame{
         	
             String filePath = userDirectory.getAbsolutePath() + File.separator + sessionName + ".txt";
             BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, false));
-    		writer.write("DrawCards;" + cardsToString(drawCards));
-    		writer.write("\nDiscardCards;" + cardsToString(discardCards));
+    		writer.write("DrawCards;" + game.cardsToString(drawCards));
+    		writer.write("\nDiscardCards;" + game.cardsToString(discardCards));
     		writer.write("\nPlayers;");
     		for(Player player : players){
-    			writer.write(player.getName() + "+" + cardsToString(player.getPlayerCards()) + "!");
+    			writer.write(player.getName() + "+" + game.cardsToString(player.getPlayerCards()) + "!");
     		}
-    		writer.write("\nUser;" + cardsToString(user.getPlayerCards()));
+    		writer.write("\nUser;" + game.cardsToString(user.getPlayerCards()));
     		writer.write("\nCurrentColor;" + currentColor);
     		writer.write("\nCurrentSign;" + currentSign);
     		writer.write("\nIsUserTurn;" + String.valueOf(isUserTurn));
@@ -869,21 +940,13 @@ public class GameSession_page extends JFrame{
         }
     }
     
-    private String cardsToString(ArrayList<Card> cards){
-    	String value = "";
-    	for(int i = 0; i < cards.size(); i++) {
-    		Card card = cards.get(i);
-    		if (i == cards.size() - 1) {
-    			value += card.getName();
-    		}
-    		else {
-    			value += card.getName() + ",";
-    		}
-        	
-        }
-    	return value;
-    }
+   
     
+    /**
+     * Loads a game state from a file.
+     *
+     * @param fileName the name of the file to load the game state from
+     */
     private void loadGame(String fileName) {
     	try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
     		String line;
@@ -891,16 +954,16 @@ public class GameSession_page extends JFrame{
     		while ((line = reader.readLine()) != null) {
                 String[] elm = line.split(";");
                 if(elm[0].equals("DrawCards")) {
-                    drawCards = loadCards(elm[1].split(","));
+                    drawCards = game.loadCards(elm[1].split(","));
                 }
                 else if(elm[0].equals("DiscardCards")) {
-                    discardCards = loadCards(elm[1].split(","));    
+                    discardCards = game.loadCards(elm[1].split(","));    
                 }
                 else if(elm[0].equals("Players")) {
-                    players = loadPlayers(elm[1]);
+                    players = game.loadPlayers(elm[1]);
                 }
                 else if(elm[0].equals("User")) {
-                    Player player = new Player("You", loadCards(elm[1].split(",")));
+                    Player player = new Player("You", game.loadCards(elm[1].split(",")));
                     user = player;
                 }
                 else if(elm[0].equals("CurrentColor")) {
@@ -924,142 +987,5 @@ public class GameSession_page extends JFrame{
     	catch (IOException e) {
 			e.printStackTrace();
 		}
-    }
-    private ArrayList<Card> loadCards(String[] cards){
-    	
-    	ArrayList<Card> deck = new ArrayList<>();
-    	for (String card : cards) {
-			Card newCard;
-			String[] features = card.split(":");
-			;
-			if(features[2].equals("Number")) {
-				newCard = new NumberCard(features[0], Integer.valueOf(features[1]));
-			}
-			else if(features[2].equals("Action")) {
-				newCard = new ActionCard(features[0], features[1]);
-			}
-			else{
-				newCard = new WildCard(features[1]);
-			}
-			deck.add(newCard);
-    	}
-    	return deck;
-    }
-    private ArrayList<AIPlayer> loadPlayers(String line){
-    	ArrayList<AIPlayer> players = new ArrayList<>();
-    	String[] elm = line.split("\\!");
-    	for (String plyr : elm) {
-    		String[] datas = plyr.split("\\+");
-    		String[] cardDatas = datas[1].split(",");
-    		ArrayList<Card> playerCards = loadCards(cardDatas);
-    		Player player = new AIPlayer(datas[0], playerCards);
-    		players.add((AIPlayer) player);
-    	}	
-    	return players;
-    }
-    private void endGame(boolean result, int score) {
-    	
-    	File file = new File("/Users/muham/git/Comp-Project/comp132_project/src/txts/users.txt");
-    	
-    	try {
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-            StringBuilder fileContent = new StringBuilder();
-            
-            while ((line = br.readLine()) != null) {
-                String[] parts = line.split(",");
-                String username = parts[0];
-                
-                if (username.equals(MainMenu_page.thisUser.getUsername())) {
-                    int gamesPlayed = Integer.parseInt(parts[2]);
-                    int wins = Integer.parseInt(parts[3]);
-                    int losses = Integer.parseInt(parts[4]);
-                    int totalScore = Integer.parseInt(parts[5]);
-                    
-                    gamesPlayed++;
-                    if(result) {
-                    	wins++;
-                    }
-                    else {
-                    	losses++;
-                    }
-                    totalScore+= score;
-                    
-                    line = String.join(",", username, parts[1], String.valueOf(gamesPlayed), String.valueOf(wins), String.valueOf(losses), String.valueOf(totalScore));
-                }
-                
-                fileContent.append(line).append("\n");
-            }
-            
-            br.close();
-            
-            BufferedWriter bw = new BufferedWriter(new FileWriter(file));
-            bw.write(fileContent.toString());
-            bw.close();
-            
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
-    private int calculateScore() {
-    	int score = 0;
-    	for(Player player : players) {
-    		for(Card card : player.getPlayerCards()) {
-    			if(card instanceof NumberCard) {
-    				score += ((NumberCard) card).getNumber();
-    			}
-    			else if(card instanceof ActionCard) {
-    				score += 20;
-    			}
-    			else {
-    				score += 50;
-    			}
-    		}
-    	}
-    	return score;
-    }
-    
-    private void saveLog(Log events) {
-    	
-    	try {
-    		File userDirectory = new File("/Users/muham/git/Comp-Project/comp132_project/src/txts/logs/" + MainMenu_page.thisUser.getUsername());
-            if (!userDirectory.exists()) {
-                userDirectory.mkdirs();
-            }
-           String filePath = userDirectory.getAbsolutePath() + File.separator + sessionName +  ".txt";
-           BufferedWriter writer = new BufferedWriter(new FileWriter(filePath, false));
-           writer.write(events.getEvents());
-           writer.close();
-    	}
-    	catch (IOException e) {
-			e.printStackTrace();
-		}
-    }
-    
-    private String loadLog(String fileName) {
-    	
-    	StringBuilder log = new StringBuilder();
-    	
-    	try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-            	log.append(line).append("\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    	String logs = log.toString();
-    	return logs;
-    }
-    
-    public static String convertPath(String originalPath, String originalRoot, String newRoot) {
-        if (originalPath.startsWith(originalRoot)) {
-            String relativePath = originalPath.substring(originalRoot.length());
-            return newRoot + relativePath;
-        } else {
-            throw new IllegalArgumentException("Original path doesn't start with the original root.");
-        }
-    }
+    }    
 }
-

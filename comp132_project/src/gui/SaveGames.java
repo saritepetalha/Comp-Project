@@ -78,7 +78,11 @@ public class SaveGames extends JFrame {
             }
         });
     }
-
+    /**
+     * Starts a saved game session with the specified file name.
+     *
+     * @param fileName The name of the file containing the saved game data.
+     */
     private void startSavedGame(String fileName) {
         GameSession_page gameSession_page = new GameSession_page(fileName);
         gameSession_page.setVisible(true);

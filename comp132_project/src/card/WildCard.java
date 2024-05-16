@@ -6,7 +6,7 @@ import javax.swing.ImageIcon;
 
 import gui.ImageResizer;
 
-public class WildCard extends Card implements Serializable{
+public class WildCard extends Card{
 	
 	private static final long serialVersionUID = 1L;
 	private String type;

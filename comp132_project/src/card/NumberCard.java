@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import javax.swing.ImageIcon;
 
-public class NumberCard extends NormalCard implements Serializable{
+public class NumberCard extends NormalCard{
 	
 	protected int number;
 	

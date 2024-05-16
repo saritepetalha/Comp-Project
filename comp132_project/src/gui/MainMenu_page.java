@@ -41,7 +41,7 @@ public class MainMenu_page extends JFrame {
 	private static final long serialVersionUID = 1L;
 	private JPanel contentPane;
 	private JTable table;
-	protected static User thisUser;
+	public static User thisUser;
 	private JTextField textField;
 	
 
@@ -225,7 +225,12 @@ public class MainMenu_page extends JFrame {
 		contentPane.add(lblNewLabel_7);
 
 	}
-	
+	/**
+	 * Finds a user with the specified username from the list of registered users.
+	 *
+	 * @param username The username of the user to find.
+	 * @return         The User object if found, or null if not found.
+	 */
 	private User findUser(String username) {
     	Register_page register_page = new Register_page();
         ArrayList<User> users = register_page.getUsers();

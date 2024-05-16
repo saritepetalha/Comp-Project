@@ -6,7 +6,7 @@ import javax.swing.ImageIcon;
 
 import gui.ImageResizer;
 
-public class ActionCard extends NormalCard implements Serializable{
+public class ActionCard extends NormalCard{
 	
 	private static final long serialVersionUID = 1L;
 	protected String action;
